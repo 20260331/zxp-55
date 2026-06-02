@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.vite/
+coverage/
+.pnpm-store/
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.sqlite
+*.sqlite3
+.venv/
+.env
+.env.*
+.DS_Store
+Thumbs.db
+*.log
