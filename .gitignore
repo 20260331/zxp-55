@@ -18,4 +18,5 @@ Thumbs.db
 ITERATION_REQUIREMENT.md
 package-lock.json
 yarn.lock
+*.tsbuildinfo
 temp.md
