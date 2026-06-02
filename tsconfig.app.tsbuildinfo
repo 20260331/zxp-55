@@ -1,1 +1,1 @@
-{"root":["./src/main.ts"],"version":"5.9.3"}
+{"root":["./src/main.ts","./src/config/levels.ts","./src/config/tasks.ts","./src/managers/gamestate.ts","./src/managers/storagemanager.ts","./src/scenes/bootscene.ts","./src/scenes/gamescene.ts","./src/scenes/levelselectscene.ts","./src/scenes/menuscene.ts","./src/scenes/profilescene.ts","./src/scenes/resultscene.ts","./src/scenes/taskscene.ts","./src/types/index.ts"],"version":"5.9.3"}
