@@ -16,3 +16,5 @@ __pycache__/
 Thumbs.db
 *.log
 ITERATION_REQUIREMENT.md
+package-lock.json
+yarn.lock
