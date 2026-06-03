@@ -1,4 +1,4 @@
-import { GameSession, LevelConfig, SurvivalSession, SkillType, SURVIVAL_CONFIG, OrbType } from '../types';
+import { GameSession, LevelConfig, SurvivalSession, SkillType, SURVIVAL_CONFIG, OrbType, SKILLS } from '../types';
 
 export class GameStateManager {
   private static instance: GameStateManager | null = null;
@@ -206,8 +206,7 @@ export class GameStateManager {
     if (this.survivalSession.skillCooldowns[skillType] > 0) return false;
     if (this.survivalSession.activeSkill !== skillType) return false;
 
-    const skill = SURVIVAL_CONFIG;
-    this.survivalSession.skillCooldowns[skillType] = SURVIVAL_CONFIG.frenzyInterval;
+    this.survivalSession.skillCooldowns[skillType] = SKILLS[skillType].cooldown;
     return true;
   }
 
@@ -240,7 +239,7 @@ export class GameStateManager {
       }
     });
 
-    const timeForNextFrenzy = this.survivalSession.frenzyWaveCount * SURVIVAL_CONFIG.frenzyInterval;
+    const timeForNextFrenzy = (this.survivalSession.frenzyWaveCount + 1) * SURVIVAL_CONFIG.frenzyInterval;
     if (!this.survivalSession.isFrenzy && this.survivalSession.survivalTime >= timeForNextFrenzy) {
       this.triggerFrenzy();
     }

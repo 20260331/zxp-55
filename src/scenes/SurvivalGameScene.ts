@@ -22,6 +22,7 @@ export class SurvivalGameScene extends Phaser.Scene {
   private isGameOverShown: boolean = false;
   private damageFlash!: Phaser.GameObjects.Rectangle;
   private screenShakeTween!: Phaser.Tweens.Tween | null;
+  private wasTimeFrozen: boolean = false;
 
   constructor() {
     super('survival-game-scene');
@@ -276,17 +277,13 @@ export class SurvivalGameScene extends Phaser.Scene {
         this.orbs.forEach(survivalOrb => {
           this.tweens.killTweensOf(survivalOrb.orb);
           survivalOrb.orb.setStrokeStyle(5, 0x60a5fa, 1);
+          const iconText = (survivalOrb.orb as any).iconText;
+          if (iconText) {
+            this.tweens.killTweensOf(iconText);
+          }
         });
         this.cameras.main.setBackgroundColor('#1e3a5f');
-        this.time.delayedCall(3000, () => {
-          this.cameras.main.setBackgroundColor('#081019');
-          this.orbs.forEach(survivalOrb => {
-            if (survivalOrb.orb.active) {
-              this.startOrbTween(survivalOrb.orb);
-              this.setOrbStroke(survivalOrb.orb, survivalOrb.type);
-            }
-          });
-        });
+        this.wasTimeFrozen = true;
         break;
 
       case 'clear':
@@ -438,15 +435,19 @@ export class SurvivalGameScene extends Phaser.Scene {
 
     const iconText = (orb as any).iconText;
     if (iconText) {
-      this.tweens.add({
-        targets: iconText,
-        scale: { from: 0.75, to: 1.2 },
-        alpha: { from: 0.9, to: 0.2 },
-        duration: SURVIVAL_CONFIG.orbSpeed,
-        yoyo: true,
-        repeat: -1
-      });
+      this.startOrbIconTween(iconText);
     }
+  }
+
+  private startOrbIconTween(iconText: Phaser.GameObjects.Text): void {
+    this.tweens.add({
+      targets: iconText,
+      scale: { from: 0.75, to: 1.2 },
+      alpha: { from: 0.9, to: 0.2 },
+      duration: SURVIVAL_CONFIG.orbSpeed,
+      yoyo: true,
+      repeat: -1
+    });
   }
 
   private setOrbStroke(orb: Phaser.GameObjects.Arc, type: OrbType): void {
@@ -673,6 +674,21 @@ export class SurvivalGameScene extends Phaser.Scene {
     if (!session.isPaused && !session.isGameOver) {
       this.gameState.updateSurvivalTime(delta / 1000);
       this.updateUI();
+
+      if (this.wasTimeFrozen && !session.isTimeFrozen) {
+        this.wasTimeFrozen = false;
+        this.cameras.main.setBackgroundColor('#081019');
+        this.orbs.forEach(survivalOrb => {
+          if (survivalOrb.orb.active) {
+            this.startOrbTween(survivalOrb.orb);
+            this.setOrbStroke(survivalOrb.orb, survivalOrb.type);
+            const iconText = (survivalOrb.orb as any).iconText;
+            if (iconText && iconText.active) {
+              this.startOrbIconTween(iconText);
+            }
+          }
+        });
+      }
 
       if (session.isGameOver && !this.isGameOverShown) {
         this.endGame();
