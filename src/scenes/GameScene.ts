@@ -31,9 +31,9 @@ export class GameScene extends Phaser.Scene {
     this.add.rectangle(480, 270, 960, 540, 0x081019);
 
     this.createUI();
-    this.createPauseOverlay();
     this.setupInput();
     this.startSpawning();
+    this.createPauseOverlay();
   }
 
   private createUI(): void {
@@ -214,6 +214,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private handleOrbMiss(orb: Phaser.GameObjects.Arc): void {
+    const session = this.gameState.getSession();
+    if (session.isPaused || session.isGameOver || !orb.active) return;
+
     this.gameState.missOrb();
     this.tweens.killTweensOf(orb);
     orb.destroy();

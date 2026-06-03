@@ -142,9 +142,10 @@ export class LevelSelectScene extends Phaser.Scene {
     }
 
     if (isUnlocked) {
-      card.setInteractive(new Phaser.Geom.Rectangle(x, y, width, height), Phaser.Geom.Rectangle.Contains);
+      const hitArea = this.add.rectangle(x + width / 2, y + height / 2, width, height, 0x000000, 0);
+      hitArea.setInteractive({ useHandCursor: true });
 
-      card.on('pointerover', () => {
+      hitArea.on('pointerover', () => {
         card.clear();
         card.fillStyle(0x334155, 0.95);
         card.lineStyle(3, parseInt(diffColor.replace('#', ''), 16), 1);
@@ -152,7 +153,7 @@ export class LevelSelectScene extends Phaser.Scene {
         card.strokeRoundedRect(x, y, width, height, 8);
       });
 
-      card.on('pointerout', () => {
+      hitArea.on('pointerout', () => {
         card.clear();
         card.fillStyle(0x1e293b, 0.9);
         card.lineStyle(2, parseInt(diffColor.replace('#', ''), 16), 0.7);
@@ -160,7 +161,7 @@ export class LevelSelectScene extends Phaser.Scene {
         card.strokeRoundedRect(x, y, width, height, 8);
       });
 
-      card.on('pointerdown', () => {
+      hitArea.on('pointerdown', () => {
         this.selectedLevel = level;
         this.updateDetailPanel(level);
       });

@@ -118,7 +118,6 @@ export class MenuScene extends Phaser.Scene {
     });
 
     bg.on('pointerdown', () => {
-      this.sound.play('click', { volume: 0.5 });
       action();
     });
   }
