@@ -33,10 +33,11 @@ export class MenuScene extends Phaser.Scene {
     this.createPlayerInfo(44, 34);
 
     const buttonConfigs = [
-      { label: '开始游戏', y: 220, color: '#4fd1c5', action: () => this.scene.start('level-select-scene') },
-      { label: '任务成就', y: 300, color: '#f59e0b', action: () => this.scene.start('task-scene') },
-      { label: '玩家档案', y: 380, color: '#60a5fa', action: () => this.scene.start('profile-scene') },
-      { label: '退出游戏', y: 460, color: '#ef4444', action: () => this.showResetConfirm() }
+      { label: '🎮 关卡模式', y: 190, color: '#4fd1c5', action: () => this.scene.start('level-select-scene') },
+      { label: '💀 生存模式', y: 260, color: '#ef4444', action: () => this.scene.start('skill-select-scene') },
+      { label: '任务成就', y: 330, color: '#f59e0b', action: () => this.scene.start('task-scene') },
+      { label: '玩家档案', y: 400, color: '#60a5fa', action: () => this.scene.start('profile-scene') },
+      { label: '退出游戏', y: 470, color: '#ef4444', action: () => this.showResetConfirm() }
     ];
 
     for (const config of buttonConfigs) {

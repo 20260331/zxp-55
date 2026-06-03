@@ -1,9 +1,9 @@
-import { SaveData, PlayerData, EXP_PER_LEVEL, GameSession, CURRENCY_PER_SCORE } from '../types';
+import { SaveData, PlayerData, EXP_PER_LEVEL, GameSession, CURRENCY_PER_SCORE, SurvivalSession, SkillType } from '../types';
 import { TASKS, getTaskById } from '../config/tasks';
 import { LEVELS } from '../config/levels';
 
 const STORAGE_KEY = 'neon_transition_save_v1';
-const SAVE_VERSION = '1.0.0';
+const SAVE_VERSION = '1.1.0';
 
 export class StorageManager {
   private static instance: StorageManager | null = null;
@@ -58,13 +58,24 @@ export class StorageManager {
       levelScores: {},
       completedTasks: [],
       currency: 0,
-      lastPlayed: Date.now()
+      lastPlayed: Date.now(),
+      bestSurvivalTime: 0,
+      bestSurvivalWave: 0,
+      bestSurvivalScore: 0,
+      selectedSkill: 'freeze'
     };
   }
 
   private migrateIfNeeded(): void {
     if (!this.saveData) return;
     if (this.saveData.version === SAVE_VERSION) return;
+    
+    const player = this.saveData.player;
+    if (player.bestSurvivalTime === undefined) player.bestSurvivalTime = 0;
+    if (player.bestSurvivalWave === undefined) player.bestSurvivalWave = 0;
+    if (player.bestSurvivalScore === undefined) player.bestSurvivalScore = 0;
+    if (player.selectedSkill === undefined) player.selectedSkill = 'freeze' as SkillType;
+    
     this.saveData.version = SAVE_VERSION;
     this.save();
   }
@@ -126,6 +137,92 @@ export class StorageManager {
 
     this.save();
     return levelUpResult;
+  }
+
+  updatePlayerFromSurvivalSession(session: SurvivalSession): { leveledUp: boolean; newLevel: number; completedTasks: string[]; earnedCurrency: number; isNewRecord: boolean } {
+    const player = this.getPlayer();
+    const result = { 
+      leveledUp: false, 
+      newLevel: player.level, 
+      completedTasks: [] as string[], 
+      earnedCurrency: 0,
+      isNewRecord: false
+    };
+
+    player.totalScore += session.score;
+    player.totalClicks += session.totalOrbsClicked;
+    player.playTime += Math.floor(session.survivalTime);
+    player.lastPlayed = Date.now();
+
+    if (session.maxCombo > player.maxCombo) {
+      player.maxCombo = session.maxCombo;
+    }
+
+    const survivalTime = Math.floor(session.survivalTime);
+    if (survivalTime > player.bestSurvivalTime) {
+      player.bestSurvivalTime = survivalTime;
+      result.isNewRecord = true;
+    }
+    if (session.wave > player.bestSurvivalWave) {
+      player.bestSurvivalWave = session.wave;
+    }
+    if (session.score > player.bestSurvivalScore) {
+      player.bestSurvivalScore = session.score;
+    }
+
+    const earnedExp = Math.floor(session.score * 0.5 + survivalTime * 2);
+    result.leveledUp = this.addExp(earnedExp);
+    result.newLevel = player.level;
+
+    result.earnedCurrency = Math.floor(session.score * CURRENCY_PER_SCORE + survivalTime * 0.5);
+    player.currency += result.earnedCurrency;
+
+    result.completedTasks = this.checkAndCompleteSurvivalTasks(session);
+
+    this.save();
+    return result;
+  }
+
+  setSelectedSkill(skill: SkillType): void {
+    const player = this.getPlayer();
+    player.selectedSkill = skill;
+    this.save();
+  }
+
+  private checkAndCompleteSurvivalTasks(session: SurvivalSession): string[] {
+    const player = this.getPlayer();
+    const newlyCompleted: string[] = [];
+
+    for (const task of TASKS) {
+      if (player.completedTasks.includes(task.id)) continue;
+
+      let progress = 0;
+      switch (task.type) {
+        case 'score':
+          progress = session.score;
+          break;
+        case 'combo':
+          progress = session.maxCombo;
+          break;
+        case 'level':
+          progress = player.completedLevels.length;
+          break;
+        case 'total_click':
+          progress = player.totalClicks;
+          break;
+        case 'play_time':
+          progress = player.playTime;
+          break;
+      }
+
+      if (progress >= task.target) {
+        player.completedTasks.push(task.id);
+        player.currency += task.reward;
+        newlyCompleted.push(task.id);
+      }
+    }
+
+    return newlyCompleted;
   }
 
   private addExp(exp: number): boolean {

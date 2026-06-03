@@ -6,6 +6,8 @@ import { GameScene } from './scenes/GameScene';
 import { ResultScene } from './scenes/ResultScene';
 import { TaskScene } from './scenes/TaskScene';
 import { ProfileScene } from './scenes/ProfileScene';
+import { SurvivalGameScene } from './scenes/SurvivalGameScene';
+import { SkillSelectScene } from './scenes/SkillSelectScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -20,7 +22,9 @@ const config: Phaser.Types.Core.GameConfig = {
     GameScene,
     ResultScene,
     TaskScene,
-    ProfileScene
+    ProfileScene,
+    SurvivalGameScene,
+    SkillSelectScene
   ],
   scale: {
     mode: Phaser.Scale.FIT,
