@@ -114,9 +114,36 @@ export interface GameSession {
   isVictory: boolean;
 }
 
+export type DailyQuestType = 'daily_score' | 'daily_combo' | 'daily_click' | 'daily_play' | 'daily_survival' | 'daily_level';
+
+export interface DailyQuestConfig {
+  id: string;
+  type: DailyQuestType;
+  name: string;
+  description: string;
+  target: number;
+  reward: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
+export interface DailyQuestProgress {
+  questId: string;
+  current: number;
+  target: number;
+  completed: boolean;
+  claimed: boolean;
+}
+
+export interface DailyQuestData {
+  date: string;
+  quests: DailyQuestProgress[];
+  lastReset: number;
+}
+
 export interface SaveData {
   version: string;
   player: PlayerData;
+  dailyQuests: DailyQuestData | null;
   createdAt: number;
   updatedAt: number;
 }

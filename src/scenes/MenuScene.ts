@@ -16,39 +16,42 @@ export class MenuScene extends Phaser.Scene {
 
     this.add.rectangle(centerX, 270, 960, 540, 0x081019);
 
-    this.add.text(centerX, 80, '霓虹跃迁', {
+    this.add.text(centerX, 70, '霓虹跃迁', {
       fontFamily: 'Segoe UI',
-      fontSize: '56px',
+      fontSize: '48px',
       color: '#4fd1c5',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
-    this.add.text(centerX, 130, 'NEON TRANSITION', {
+    this.add.text(centerX, 115, 'NEON TRANSITION', {
       fontFamily: 'Segoe UI',
-      fontSize: '18px',
+      fontSize: '16px',
       color: '#9fb3c8',
       letterSpacing: 4
     }).setOrigin(0.5);
 
-    this.createPlayerInfo(44, 34);
+    this.createPlayerInfo(44, 24);
 
     const buttonConfigs = [
-      { label: '🎮 关卡模式', y: 190, color: '#4fd1c5', action: () => this.scene.start('level-select-scene') },
-      { label: '💀 生存模式', y: 260, color: '#ef4444', action: () => this.scene.start('skill-select-scene') },
-      { label: '任务成就', y: 330, color: '#f59e0b', action: () => this.scene.start('task-scene') },
-      { label: '玩家档案', y: 400, color: '#60a5fa', action: () => this.scene.start('profile-scene') },
-      { label: '退出游戏', y: 470, color: '#ef4444', action: () => this.showResetConfirm() }
+      { label: '🎮 关卡模式', y: 165, color: '#4fd1c5', action: () => this.scene.start('level-select-scene') },
+      { label: '💀 生存模式', y: 225, color: '#ef4444', action: () => this.scene.start('skill-select-scene') },
+      { label: '📋 每日悬赏', y: 285, color: '#a78bfa', action: () => this.scene.start('daily-quest-scene') },
+      { label: '任务成就', y: 345, color: '#f59e0b', action: () => this.scene.start('task-scene') },
+      { label: '玩家档案', y: 405, color: '#60a5fa', action: () => this.scene.start('profile-scene') },
+      { label: '退出游戏', y: 465, color: '#ef4444', action: () => this.showResetConfirm() }
     ];
 
     for (const config of buttonConfigs) {
       this.createButton(centerX, config.y, config.label, config.color, config.action);
     }
 
-    this.add.text(centerX, 510, '在光球消失前完成点击，持续累积分数。', {
+    this.add.text(centerX, 515, '在光球消失前完成点击，持续累积分数。', {
       fontFamily: 'Segoe UI',
-      fontSize: '14px',
+      fontSize: '12px',
       color: '#64748b'
     }).setOrigin(0.5);
+
+    this.createDailyQuestBadge(centerX + 170, 285);
   }
 
   private createPlayerInfo(x: number, y: number): void {
@@ -85,6 +88,23 @@ export class MenuScene extends Phaser.Scene {
       fontSize: '16px',
       color: '#60a5fa'
     }));
+  }
+
+  private createDailyQuestBadge(x: number, y: number): void {
+    const storage = StorageManager.getInstance();
+    const claimableCount = storage.getClaimableDailyQuestCount();
+    
+    if (claimableCount > 0) {
+      const badgeBg = this.add.circle(x, y - 20, 14, 0xef4444, 0.9);
+      badgeBg.setStrokeStyle(2, 0xfca5a5, 0.8);
+      
+      this.add.text(x, y - 20, claimableCount.toString(), {
+        fontFamily: 'Segoe UI',
+        fontSize: '14px',
+        color: '#ffffff',
+        fontStyle: 'bold'
+      }).setOrigin(0.5);
+    }
   }
 
   private createButton(x: number, y: number, label: string, color: string, action: () => void): void {

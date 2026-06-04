@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GameSession, SurvivalSession, SKILLS } from '../types';
 import { getLevelById, getDifficultyColor, getDifficultyLabel } from '../config/levels';
 import { getTaskById } from '../config/tasks';
+import { getDailyQuestById } from '../config/dailyQuests';
 import { GameStateManager } from '../managers/GameState';
 import { StorageManager } from '../managers/StorageManager';
 
@@ -14,6 +15,10 @@ interface ResultSceneData {
     completedTasks: string[];
     earnedCurrency: number;
     isNewRecord?: boolean;
+    dailyQuestProgress?: {
+      completedQuests: string[];
+      progressUpdates: { questId: string; oldValue: number; newValue: number }[];
+    };
   };
 }
 
@@ -73,11 +78,18 @@ export class ResultScene extends Phaser.Scene {
       }).setOrigin(0.5);
     }
 
-    const panelY = levelUp.leveledUp ? 180 : 150;
+    let panelY = levelUp.leveledUp ? 180 : 150;
     this.createStatsPanel(centerX, panelY, session, levelUp);
 
+    let nextY = panelY + 220;
+    
     if (levelUp.completedTasks.length > 0) {
-      this.createTaskRewards(centerX, panelY + 220, levelUp.completedTasks);
+      this.createTaskRewards(centerX, nextY, levelUp.completedTasks);
+      nextY += 40 + levelUp.completedTasks.length * 40;
+    }
+
+    if (levelUp.dailyQuestProgress && (levelUp.dailyQuestProgress.completedQuests.length > 0 || levelUp.dailyQuestProgress.progressUpdates.length > 0)) {
+      this.createDailyQuestProgress(centerX, nextY, levelUp.dailyQuestProgress);
     }
 
     this.createButtons(centerX, 470, session);
@@ -125,8 +137,15 @@ export class ResultScene extends Phaser.Scene {
 
     this.createSurvivalStatsPanel(centerX, panelY, session, levelUp);
 
+    let nextY = panelY + 240;
+    
     if (levelUp.completedTasks.length > 0) {
-      this.createTaskRewards(centerX, panelY + 240, levelUp.completedTasks);
+      this.createTaskRewards(centerX, nextY, levelUp.completedTasks);
+      nextY += 40 + levelUp.completedTasks.length * 40;
+    }
+
+    if (levelUp.dailyQuestProgress && (levelUp.dailyQuestProgress.completedQuests.length > 0 || levelUp.dailyQuestProgress.progressUpdates.length > 0)) {
+      this.createDailyQuestProgress(centerX, nextY, levelUp.dailyQuestProgress);
     }
 
     this.createSurvivalButtons(centerX, 490, session);
@@ -269,6 +288,95 @@ export class ResultScene extends Phaser.Scene {
 
     if (taskIds.length > 3) {
       this.add.text(x, y + height - 20, `还有 ${taskIds.length - 3} 个任务已完成...`, {
+        fontFamily: 'Segoe UI',
+        fontSize: '13px',
+        color: '#94a3b8'
+      }).setOrigin(0.5);
+    }
+  }
+
+  private createDailyQuestProgress(
+    x: number, 
+    y: number, 
+    progress: {
+      completedQuests: string[];
+      progressUpdates: { questId: string; oldValue: number; newValue: number }[];
+    }
+  ): void {
+    const width = 400;
+    const itemHeight = 36;
+    const totalItems = progress.completedQuests.length + progress.progressUpdates.filter(
+      p => !progress.completedQuests.includes(p.questId)
+    ).length;
+    const height = Math.min(totalItems, 4) * itemHeight + 60;
+
+    const panel = this.add.graphics();
+    panel.fillStyle(0x1e293b, 0.95);
+    panel.lineStyle(2, 0xa78bfa, 0.6);
+    panel.fillRoundedRect(x - width / 2, y, width, height, 12);
+    panel.strokeRoundedRect(x - width / 2, y, width, height, 12);
+
+    this.add.text(x, y + 20, '📋 每日悬赏进度', {
+      fontFamily: 'Segoe UI',
+      fontSize: '18px',
+      color: '#a78bfa',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    let itemIndex = 0;
+    const maxItems = 4;
+
+    progress.completedQuests.slice(0, maxItems).forEach((questId) => {
+      const quest = getDailyQuestById(questId);
+      if (quest) {
+        const itemY = y + 50 + itemIndex * itemHeight;
+        this.add.text(x - width / 2 + 25, itemY, `✓ ${quest.name}`, {
+          fontFamily: 'Segoe UI',
+          fontSize: '13px',
+          color: '#4ade80',
+          fontStyle: 'bold'
+        });
+
+        this.add.text(x + width / 2 - 25, itemY, `+${quest.reward} 💎`, {
+          fontFamily: 'Segoe UI',
+          fontSize: '13px',
+          color: '#60a5fa',
+          fontStyle: 'bold'
+        }).setOrigin(1, 0);
+        
+        itemIndex++;
+      }
+    });
+
+    if (itemIndex < maxItems) {
+      progress.progressUpdates
+        .filter(p => !progress.completedQuests.includes(p.questId))
+        .slice(0, maxItems - itemIndex)
+        .forEach((update) => {
+          const quest = getDailyQuestById(update.questId);
+          if (quest) {
+            const itemY = y + 50 + itemIndex * itemHeight;
+            this.add.text(x - width / 2 + 25, itemY, quest.name, {
+              fontFamily: 'Segoe UI',
+              fontSize: '13px',
+              color: '#f8fafc'
+            });
+
+            this.add.text(x + width / 2 - 25, itemY, `${update.oldValue} → ${update.newValue}`, {
+              fontFamily: 'Segoe UI',
+              fontSize: '13px',
+              color: '#60a5fa',
+              fontStyle: 'bold'
+            }).setOrigin(1, 0);
+            
+            itemIndex++;
+          }
+        });
+    }
+
+    const remainingItems = totalItems - maxItems;
+    if (remainingItems > 0) {
+      this.add.text(x, y + height - 20, `还有 ${remainingItems} 项进度已更新...`, {
         fontFamily: 'Segoe UI',
         fontSize: '13px',
         color: '#94a3b8'

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { StorageManager } from '../managers/StorageManager';
 import { LEVELS } from '../config/levels';
 import { TASKS } from '../config/tasks';
+import { generateDailyQuests } from '../config/dailyQuests';
 
 export class ProfileScene extends Phaser.Scene {
   constructor() {
@@ -27,6 +28,7 @@ export class ProfileScene extends Phaser.Scene {
     this.createStatsPanel(44, 240, player);
     this.createLevelProgress(520, 100, player);
     this.createTaskProgress(520, 290, player);
+    this.createDailyQuestOverview(44, 490);
   }
 
   private createBackButton(): void {
@@ -333,5 +335,88 @@ export class ProfileScene extends Phaser.Scene {
     if (diff < 604800000) return `${Math.floor(diff / 86400000)}天前`;
 
     return `${date.getMonth() + 1}/${date.getDate()}`;
+  }
+
+  private createDailyQuestOverview(x: number, y: number): void {
+    const width = 872;
+    const height = 40;
+
+    const storage = StorageManager.getInstance();
+    const dailyQuests = storage.getDailyQuestsWithConfig();
+    const completedCount = dailyQuests.filter(q => q.progress.completed).length;
+    const claimedCount = dailyQuests.filter(q => q.progress.claimed).length;
+    const claimableCount = storage.getClaimableDailyQuestCount();
+
+    const panel = this.add.graphics();
+    panel.fillStyle(0x1e293b, 0.95);
+    panel.lineStyle(2, 0xa78bfa, 0.4);
+    panel.fillRoundedRect(x, y, width, height, 10);
+    panel.strokeRoundedRect(x, y, width, height, 10);
+
+    this.add.text(x + 20, y + height / 2, '📋 每日悬赏', {
+      fontFamily: 'Segoe UI',
+      fontSize: '16px',
+      color: '#a78bfa',
+      fontStyle: 'bold'
+    }).setOrigin(0, 0.5);
+
+    const progressWidth = 200;
+    const progressX = x + 140;
+    const progressY = y + height / 2 - 6;
+
+    const progressBg = this.add.graphics();
+    progressBg.fillStyle(0x334155, 0.8);
+    progressBg.fillRoundedRect(progressX, progressY, progressWidth, 12, 4);
+
+    const progressFill = this.add.graphics();
+    const fillWidth = (completedCount / dailyQuests.length) * progressWidth;
+    progressFill.fillStyle(0xa78bfa, 1);
+    progressFill.fillRoundedRect(progressX, progressY, fillWidth, 12, 4);
+
+    this.add.text(progressX + progressWidth / 2, progressY + 6, `${completedCount} / ${dailyQuests.length} 已完成`, {
+      fontFamily: 'Segoe UI',
+      fontSize: '11px',
+      color: '#f8fafc',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    if (claimableCount > 0) {
+      this.add.text(x + 380, y + height / 2, `${claimableCount} 个可领取`, {
+        fontFamily: 'Segoe UI',
+        fontSize: '14px',
+        color: '#4ade80',
+        fontStyle: 'bold'
+      }).setOrigin(0, 0.5);
+    } else if (claimedCount === dailyQuests.length) {
+      this.add.text(x + 380, y + height / 2, '✓ 全部已领取', {
+        fontFamily: 'Segoe UI',
+        fontSize: '14px',
+        color: '#64748b',
+        fontStyle: 'bold'
+      }).setOrigin(0, 0.5);
+    } else {
+      this.add.text(x + 380, y + height / 2, '继续加油！', {
+        fontFamily: 'Segoe UI',
+        fontSize: '14px',
+        color: '#94a3b8'
+      }).setOrigin(0, 0.5);
+    }
+
+    const viewBtn = this.add.rectangle(x + width - 70, y + height / 2, 100, 28, 0xa78bfa, 0.9);
+    viewBtn.setStrokeStyle(2, 0xa78bfa, 0.8);
+    viewBtn.setInteractive({ useHandCursor: true });
+
+    this.add.text(x + width - 70, y + height / 2, '查看详情', {
+      fontFamily: 'Segoe UI',
+      fontSize: '13px',
+      color: '#081019',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+
+    viewBtn.on('pointerover', () => viewBtn.setFillStyle(0xc4b5fd, 1));
+    viewBtn.on('pointerout', () => viewBtn.setFillStyle(0xa78bfa, 0.9));
+    viewBtn.on('pointerdown', () => {
+      this.scene.start('daily-quest-scene');
+    });
   }
 }
