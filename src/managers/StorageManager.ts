@@ -24,7 +24,16 @@ export class StorageManager {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         this.saveData = JSON.parse(saved);
+        if (!this.saveData || !this.saveData.player) {
+          console.warn('Save data is corrupted, creating new save');
+          this.createNewSave();
+          return false;
+        }
         this.migrateIfNeeded();
+        if (!this.saveData.dailyQuests) {
+          this.saveData.dailyQuests = this.createDefaultDailyQuests();
+          this.save();
+        }
         return true;
       }
     } catch (e) {
@@ -88,21 +97,27 @@ export class StorageManager {
 
   private migrateIfNeeded(): void {
     if (!this.saveData) return;
-    if (this.saveData.version === SAVE_VERSION) return;
+    if (this.saveData.version === SAVE_VERSION && this.saveData.dailyQuests) return;
     
     const player = this.saveData.player;
     if (player.bestSurvivalTime === undefined) player.bestSurvivalTime = 0;
     if (player.bestSurvivalWave === undefined) player.bestSurvivalWave = 0;
     if (player.bestSurvivalScore === undefined) player.bestSurvivalScore = 0;
     if (player.selectedSkill === undefined) player.selectedSkill = 'freeze' as SkillType;
-    if (this.saveData.dailyQuests === undefined) this.saveData.dailyQuests = this.createDefaultDailyQuests();
+    if (!this.saveData.dailyQuests) this.saveData.dailyQuests = this.createDefaultDailyQuests();
     
     this.saveData.version = SAVE_VERSION;
     this.save();
   }
 
   private checkDailyReset(): void {
-    if (!this.saveData || !this.saveData.dailyQuests) return;
+    if (!this.saveData) return;
+    
+    if (!this.saveData.dailyQuests) {
+      this.saveData.dailyQuests = this.createDefaultDailyQuests();
+      this.save();
+      return;
+    }
     
     const today = new Date().toDateString();
     if (this.saveData.dailyQuests.date !== today) {
@@ -133,6 +148,10 @@ export class StorageManager {
       this.load();
     }
     this.checkDailyReset();
+    if (!this.saveData!.dailyQuests) {
+      this.saveData!.dailyQuests = this.createDefaultDailyQuests();
+      this.save();
+    }
     return this.saveData!.dailyQuests!;
   }
 
